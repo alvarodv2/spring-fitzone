@@ -18,10 +18,10 @@ public class SpringFitzoneApplication implements CommandLineRunner {
     @Autowired
     private ServiceClient serviceClient;
 
-    private static final Logger logger =
-            LoggerFactory.getLogger(SpringFitzoneApplication.class);
+    private static final Logger logger = LoggerFactory.getLogger(SpringFitzoneApplication.class);
+    private static final String NL = System.lineSeparator();
 
-    String nl = System.lineSeparator();
+    private final Scanner console = new Scanner(System.in);
 
     public static void main(String[] args) {
         logger.info("*** Starting Application ***");
@@ -32,20 +32,20 @@ public class SpringFitzoneApplication implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
         fitZoneApp();
+        console.close();
     }
 
-    private void fitZoneApp(){
-        var exit = false;
-        var consoleMenu = new Scanner(System.in);
+    private void fitZoneApp() {
+        boolean exit = false;
 
-        while (!exit){
-            var option = showMenu(consoleMenu);
-            exit = executeOption(consoleMenu, option);
+        while (!exit) {
+            int option = showMenu();
+            exit = executeOption(option);
             System.out.println();
         }
     }
 
-    private int showMenu(Scanner console){
+    private int showMenu() {
         System.out.println("""
             *** Fit Zone Application ***
             1. List Clients
@@ -54,67 +54,57 @@ public class SpringFitzoneApplication implements CommandLineRunner {
             4. Modify Client
             5. Delete Client
             6. Exit""");
-        System.out.print("Choose an option: ");
-        return Integer.parseInt(console.nextLine());
+        return readInt("Choose an option: ");
     }
 
+    private boolean executeOption(int option) {
+        boolean exit = false;
 
-    private boolean executeOption(Scanner console, int option){
-        var exit = false;
-
-        switch (option){
+        switch (option) {
             case 1 -> {
-                System.out.println(nl + "--- List of Clients ---");
+                System.out.println(NL + "--- List of Clients ---");
                 List<Client> clients = serviceClient.clientList();
                 if (clients.isEmpty()) {
                     System.out.println("No clients found.");
                 } else {
-                    clients.forEach(client -> System.out.println(client.toString()));
+                    clients.forEach(System.out::println);
                 }
             }
             case 2 -> {
-                System.out.println(nl + "--- Search Client By ID ---");
-                System.out.print("Client ID to find: ");
-                var clientId = Integer.parseInt(console.nextLine());
+                System.out.println(NL + "--- Search Client By ID ---");
+                int clientId = readInt("Client ID to find: ");
                 Client client = serviceClient.searchClientById(clientId);
-                if (client != null){
+                if (client != null) {
                     System.out.println("Client found: " + client);
                 } else {
                     System.out.println("Client not found with ID: " + clientId);
                 }
             }
             case 3 -> {
-                System.out.println(nl + "--- Add Client ---");
-                System.out.print("Name: ");
-                var clientName = console.nextLine();
-                System.out.print("Last Name: ");
-                var clientSecondName = console.nextLine();
-                System.out.print("Membership: ");
-                var clientMembership = Integer.parseInt(console.nextLine());
+                System.out.println(NL + "--- Add Client ---");
+                String name = readString("Name: ");
+                String lastName = readString("Last Name: ");
+                int membership = readInt("Membership: ");
 
-                var client = new Client();
-                client.setClientName(clientName);
-                client.setClientSecondName(clientSecondName);
-                client.setClientMembership(clientMembership);
+                Client client = new Client();
+                client.setClientName(name);
+                client.setClientSecondName(lastName);
+                client.setClientMembership(membership);
                 serviceClient.saveClient(client);
                 System.out.println("Client added successfully: " + client);
             }
             case 4 -> {
-                System.out.println(nl + "--- Update Client ---");
-                System.out.print("Client ID to modify: ");
-                var clientId = Integer.parseInt(console.nextLine());
+                System.out.println(NL + "--- Update Client ---");
+                int clientId = readInt("Client ID to modify: ");
                 Client client = serviceClient.searchClientById(clientId);
-                if (client != null){
-                    System.out.print("Name: ");
-                    var clientName = console.nextLine();
-                    System.out.print("Last Name: ");
-                    var clientSecondName = console.nextLine();
-                    System.out.print("Membership: ");
-                    var clientMembership = Integer.parseInt(console.nextLine());
+                if (client != null) {
+                    String name = readString("Name: ");
+                    String lastName = readString("Last Name: ");
+                    int membership = readInt("Membership: ");
 
-                    client.setClientName(clientName);
-                    client.setClientSecondName(clientSecondName);
-                    client.setClientMembership(clientMembership);
+                    client.setClientName(name);
+                    client.setClientSecondName(lastName);
+                    client.setClientMembership(membership);
                     serviceClient.saveClient(client);
                     System.out.println("Client updated successfully: " + client);
                 } else {
@@ -122,11 +112,10 @@ public class SpringFitzoneApplication implements CommandLineRunner {
                 }
             }
             case 5 -> {
-                System.out.println(nl + "--- Delete Client ---");
-                System.out.print("Client ID to delete: ");
-                var clientId = Integer.parseInt(console.nextLine());
-                var client = serviceClient.searchClientById(clientId);
-                if (client != null){
+                System.out.println(NL + "--- Delete Client ---");
+                int clientId = readInt("Client ID to delete: ");
+                Client client = serviceClient.searchClientById(clientId);
+                if (client != null) {
                     serviceClient.deleteClient(client);
                     System.out.println("Client deleted successfully: " + client);
                 } else {
@@ -134,11 +123,21 @@ public class SpringFitzoneApplication implements CommandLineRunner {
                 }
             }
             case 6 -> {
-                System.out.println(nl + "See you soon! :D");
+                System.out.println(NL + "See you soon! :D");
                 exit = true;
             }
             default -> System.out.println("Invalid option selected: " + option);
         }
         return exit;
+    }
+
+    private String readString(String prompt) {
+        System.out.print(prompt);
+        return console.nextLine();
+    }
+
+    private int readInt(String prompt) {
+        System.out.print(prompt);
+        return Integer.parseInt(console.nextLine());
     }
 }
